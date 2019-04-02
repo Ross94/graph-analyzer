@@ -1,6 +1,6 @@
 # Graph Analyzer
 
-This project compute metrics for pajek graph generated from https://github.com/Ross94/ethereum-galaxy-server. 
+This project compute metrics for pajek graph generated from https://github.com/Ross94/ethereum-galaxy-server.  
 Metrics calculated:
 
 * Number of Nodes
