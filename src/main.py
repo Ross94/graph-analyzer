@@ -22,36 +22,39 @@ def main():
     logger.log("Start metrics computing")
     #printer.print_graph(g)
 
-	#submit metrics tasks
-    node_number_task = pool.apply_async(metrics.nodes_number, (g,))
-    deg_distr_task = pool.apply_async(metrics.degree_distribution, (g,))
-    clust_coeff_task = pool.apply_async(metrics.clustering_coefficient, (g,))
-    avg_path_len_task = pool.apply_async(metrics.average_path_length, (g,))
+    if len(g.edges) != 0:
+        #submit metrics tasks
+        node_number_task = pool.apply_async(metrics.nodes_number, (g,))
+        deg_distr_task = pool.apply_async(metrics.degree_distribution, (g,))
+        clust_coeff_task = pool.apply_async(metrics.clustering_coefficient, (g,))
+        avg_path_len_task = pool.apply_async(metrics.average_path_length, (g,))
 
-    #cannot submit other tasks
-    pool.close()
-    #wait results
-    pool.join()
+        #cannot submit other tasks
+        pool.close()
+        #wait results
+        pool.join()
 
-    logger.log( "Metrics calculated")
+        logger.log( "Metrics calculated")
 
-    #get results
-    nodes_num = node_number_task.get()
-    deg_distr = deg_distr_task.get()
-    clust_coeff = clust_coeff_task.get()
-    avg_path_len = avg_path_len_task.get()
+        #get results
+        nodes_num = node_number_task.get()
+        deg_distr = deg_distr_task.get()
+        clust_coeff = clust_coeff_task.get()
+        avg_path_len = avg_path_len_task.get()
 
-    logger.log("Start saving graph")
+        logger.log("Start saving graph")
 
-    #save result
-    results = {
-        "nodes_number": nodes_num,
-        "clustering_coefficient": clust_coeff,
-        "average_path_length": avg_path_len,
-        "degree_distribution": deg_distr,
-    }
-    saver.save_json_file(results)
-    logger.log("Data saved")
+        #save result
+        results = {
+            "nodes_number": nodes_num,
+            "clustering_coefficient": clust_coeff,
+            "average_path_length": avg_path_len,
+            "degree_distribution": deg_distr,
+        }
+        saver.save_json_file(results)
+        logger.log("Data saved")
+    else:
+        logger.log("Empty graph, no metrics calculated")
 
 if __name__ == "__main__":
 	main()
