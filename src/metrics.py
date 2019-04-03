@@ -4,9 +4,9 @@ from collections import defaultdict
 import logger
 
 def nodes_number(graph):
-	ret = graph.number_of_nodes()
+	nodes_num = graph.number_of_nodes()
 	logger.log("Nodes number calculated")
-	return ret
+	return nodes_num
 
 def degree_distribution(graph):
 	degrees = defaultdict(list)
@@ -19,21 +19,29 @@ def degree_distribution(graph):
 	for k, v in degrees.iteritems():
 		degrees[k] = float(len(v)) / graph.number_of_nodes() * 100
 
-	ret = dict(degrees)
+	deg_distr = dict(degrees)
 	logger.log("Degree distribution calculated")
-	return ret
+	return deg_distr
 
 def clustering_coefficient(graph):
-	ret = nx.average_clustering(graph, weight='weight')
+	clust_coeff = nx.average_clustering(graph, weight='weight')
 	logger.log("Clustering coefficient calculated")
-	return ret
+	return clust_coeff
 
-def average_path_length(graph):
-	ret = nx.average_shortest_path_length(graph)
-	logger.log("Average path length calculated")
-	return ret
+def average_path_length(graph, weight=None):
+    total_weight = 0.0
 
-def average_weighted_path_length(graph):
-	ret = nx.average_shortest_path_length(graph, weight='weight')
-	logger.log("Average weighted path length calculated")
-	return ret
+    for s in graph.nodes:
+        for t in graph.nodes:
+            if nx.has_path(graph, s, t):
+                total_weight = total_weight + nx.shortest_path_length(graph, s, t, weight=weight)
+
+    avg_path_len = total_weight / (graph.number_of_nodes() * (graph.number_of_nodes() - 1))
+
+    if weight == None:
+		logger.log("Average path length calculated")
+    else:
+		logger.log("Average weighted path length calculated")
+
+    return avg_path_len
+	

@@ -28,7 +28,7 @@ def main():
         deg_distr_task = pool.apply_async(metrics.degree_distribution, (g,))
         clust_coeff_task = pool.apply_async(metrics.clustering_coefficient, (g,))
         avg_path_len_task = pool.apply_async(metrics.average_path_length, (g,))
-        avg_wgh_path_len_task = pool.apply_async(metrics.average_weighted_path_length, (g,))
+        avg_wgh_path_len_task = pool.apply_async(metrics.average_path_length, (g, "weight", ))
 
         #cannot submit other tasks
         pool.close()
