@@ -1,8 +1,12 @@
 import networkx as nx
 from collections import defaultdict
 
+import logger
+
 def nodes_number(graph):
-	return graph.number_of_nodes()
+	ret = graph.number_of_nodes()
+	logger.log("Nodes number calculated")
+	return ret
 
 def degree_distribution(graph):
 	degrees = defaultdict(list)
@@ -15,10 +19,21 @@ def degree_distribution(graph):
 	for k, v in degrees.iteritems():
 		degrees[k] = float(len(v)) / graph.number_of_nodes() * 100
 
-	return dict(degrees) 
+	ret = dict(degrees)
+	logger.log("Degree distribution calculated")
+	return ret
 
 def clustering_coefficient(graph):
-	return nx.average_clustering(graph, weight='weight')
+	ret = nx.average_clustering(graph, weight='weight')
+	logger.log("Clustering coefficient calculated")
+	return ret
 
 def average_path_length(graph):
-	return nx.average_shortest_path_length(graph, weight='weight')
+	ret = nx.average_shortest_path_length(graph)
+	logger.log("Average path length calculated")
+	return ret
+
+def average_weighted_path_length(graph):
+	ret = nx.average_shortest_path_length(graph, weight='weight')
+	logger.log("Average weighted path length calculated")
+	return ret

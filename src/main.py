@@ -28,6 +28,7 @@ def main():
         deg_distr_task = pool.apply_async(metrics.degree_distribution, (g,))
         clust_coeff_task = pool.apply_async(metrics.clustering_coefficient, (g,))
         avg_path_len_task = pool.apply_async(metrics.average_path_length, (g,))
+        avg_wgh_path_len_task = pool.apply_async(metrics.average_weighted_path_length, (g,))
 
         #cannot submit other tasks
         pool.close()
@@ -41,6 +42,7 @@ def main():
         deg_distr = deg_distr_task.get()
         clust_coeff = clust_coeff_task.get()
         avg_path_len = avg_path_len_task.get()
+        avg_wgh_path_len = avg_wgh_path_len_task.get()
 
         logger.log("Start saving graph")
 
@@ -49,6 +51,7 @@ def main():
             "nodes_number": nodes_num,
             "clustering_coefficient": clust_coeff,
             "average_path_length": avg_path_len,
+            "average_weighted_path_length": avg_wgh_path_len,
             "degree_distribution": deg_distr,
         }
         saver.save_json_file(results)
