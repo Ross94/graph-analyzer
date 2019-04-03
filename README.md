@@ -20,7 +20,8 @@ Python installation:
 
 Windows:
 
-Go to https://www.python.org/ and download .exe files, then run it.
+Go to https://www.python.org/ and download .exe files, then run it.  
+
 Linux:
 
 ```
