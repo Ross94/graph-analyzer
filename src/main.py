@@ -5,6 +5,7 @@ import graph_types
 import printer 
 import metrics 
 import saver
+import logger
 
 def main():
     #load file
@@ -13,12 +14,12 @@ def main():
 
     pool = ThreadPool(processes=PROCESSES_NUMBER)
 
-    print "Start loading graph"
+    logger.log("Start loading graph")
 
     g = graph_types.load_pajek(GRAPH_PATH)
 
-    print "Terminated graph loading"
-    print "Start metrics computing"
+    logger.log("Terminated graph loading")
+    logger.log("Start metrics computing")
     #printer.print_graph(g)
 
 	#submit metrics tasks
@@ -32,7 +33,7 @@ def main():
     #wait results
     pool.join()
 
-    print "Metrics calculated"
+    logger.log( "Metrics calculated")
 
     #get results
     nodes_num = node_number_task.get()
@@ -40,7 +41,7 @@ def main():
     clust_coeff = clust_coeff_task.get()
     avg_path_len = avg_path_len_task.get()
 
-    print "Start saving graph"
+    logger.log("Start saving graph")
 
     #save result
     results = {
@@ -50,7 +51,7 @@ def main():
         "degree_distribution": deg_distr,
     }
     saver.save_json_file(results)
-    print "Data saved"
+    logger.log("Data saved")
 
 if __name__ == "__main__":
 	main()
