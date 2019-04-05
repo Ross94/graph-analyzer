@@ -32,9 +32,15 @@ def average_path_length(graph, weight=None):
     total_weight = 0.0
 
     for s in graph.nodes:
-        for t in graph.nodes:
-            if nx.has_path(graph, s, t):
-                total_weight = total_weight + nx.shortest_path_length(graph, s, t, weight=weight)
+      if s % 10000 == 0:
+        if weight == None:
+          logger.log("node %d/%d" % (s, graph.number_of_nodes()))
+        else:
+          logger.log("weighted node %d/%d" % (s, graph.number_of_nodes()))
+
+      for t in graph.nodes:
+        if nx.has_path(graph, s, t):
+          total_weight = total_weight + nx.shortest_path_length(graph, s, t, weight=weight)
 
     avg_path_len = total_weight / (graph.number_of_nodes() * (graph.number_of_nodes() - 1))
 
