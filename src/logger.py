@@ -1,4 +1,5 @@
 import os
+import sys
 from datetime import datetime
 
 def log(data):
@@ -14,3 +15,10 @@ def log(data):
 		log_file.write(log_str + "\n")
 
     print log_str 
+
+def progress_bar(elem, last, msg):
+    percentage = float(elem) / last * 100
+    sys.stdout.write('\r' + msg + 'nodes calculated: %d/%d, percentage: %.6f%s' % (elem, last, percentage, "%"))
+    if elem == last:
+        sys.stdout.write('\n')
+    sys.stdout.flush() 

@@ -29,25 +29,21 @@ def clustering_coefficient(graph):
 	return clust_coeff
 
 def average_path_length(graph, weight=None):
-    total_weight = 0.0
+	weightStr = "weighted " if weight != None else ""
+	total_weight = 0.0
+	bar_message = "Average path length " + weightStr
 
-    for s in graph.nodes:
-      if s % 10000 == 0:
-        if weight == None:
-          logger.log("node %d/%d" % (s, graph.number_of_nodes()))
-        else:
-          logger.log("weighted node %d/%d" % (s, graph.number_of_nodes()))
+	logger.progress_bar(0, graph.number_of_nodes(), bar_message)
+	for s in graph.nodes:
+		logger.progress_bar(s, graph.number_of_nodes(), bar_message)
 
-      for t in graph.nodes:
-        if nx.has_path(graph, s, t):
-          total_weight = total_weight + nx.shortest_path_length(graph, s, t, weight=weight)
+		for t in graph.nodes:
+			if nx.has_path(graph, s, t):
+				total_weight = total_weight + nx.shortest_path_length(graph, s, t, weight=weight)
 
-    avg_path_len = total_weight / (graph.number_of_nodes() * (graph.number_of_nodes() - 1))
+	avg_path_len = total_weight / (graph.number_of_nodes() * (graph.number_of_nodes() - 1))
 
-    if weight == None:
-		logger.log("Average path length calculated")
-    else:
-		logger.log("Average weighted path length calculated")
+	logger.log("Average " + weightStr + "path length calculated")
 
-    return avg_path_len
+	return avg_path_len
 	
