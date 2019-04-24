@@ -2,6 +2,8 @@ import json
 import os
 
 def save_json_file(data):
+	'''Save metrics in json file.'''
+	
 	RESULT_DIRECTORY = "./../result"
 	RESULTS_PATH = RESULT_DIRECTORY + "/results.json"
 
