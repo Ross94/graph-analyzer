@@ -11,7 +11,7 @@ Metrics calculated:
 
 ## Getting Started
 
-For use this project simply clone this project, install python 2.7 and Networkx.
+For use this project simply clone this project, install python 3 and Networkx.
 
 
 ### Installing
@@ -25,18 +25,28 @@ Go to https://www.python.org/ and download .exe files, then run it.
 Linux:
 
 ```
-sudo apt-get install python 2.7
+sudo apt-get install python3.7.3
 ```
 
 Networkx installation:
 
 ```
-pip install networkx==2.2
+pip3 install networkx==2.3
 ```
+
+In Windows add --user after networkx version.  
 
 ## Running
 
 Get inside src folder and run the command below:
+
+Windows:  
+
+```
+py -3 .\main.py graphPath processNum
+```
+
+Linux:  
 
 ```
 python main.py graphPath processNum
