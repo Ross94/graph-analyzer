@@ -1,12 +1,12 @@
 import networkx as nx
 from collections import defaultdict
-import threading
+from multiprocessing import Lock
 
 import logger
 
-weighted_completed = 0
-unweighted_completed = 0
-sem = threading.Semaphore()
+__weighted_completed = 0
+__unweighted_completed = 0
+__progress_bar_lock = Lock()
 
 def nodes_number(graph):
 	'''Compute the number of nodes in graph'''
@@ -54,17 +54,17 @@ def average_path_length(graph, source, weight=None):
 
 	avg_path_len = total_weight /  (nodes_number - 1)
 
-	sem.acquire()
+	__progress_bar_lock.acquire()
 
 	if weight != None:
-		global weighted_completed
-		weighted_completed = weighted_completed + 1
-		nodes_computed = weighted_completed
+		global __weighted_completed
+		__weighted_completed = __weighted_completed + 1
+		nodes_computed = __weighted_completed
 		weightStr = "weighted "
 	else:
-		global unweighted_completed
-		unweighted_completed = unweighted_completed + 1
-		nodes_computed = unweighted_completed
+		global __unweighted_completed
+		__unweighted_completed = __unweighted_completed + 1
+		nodes_computed = __unweighted_completed
 		weightStr = ""
 	
 	bar_message = "Average {0}path length".format(weightStr)
@@ -73,7 +73,7 @@ def average_path_length(graph, source, weight=None):
 	if nodes_computed == nodes_number:
 		logger.log("{0} calculated".format(bar_message))
 
-	sem.release()
+	__progress_bar_lock.release()
 
 	return avg_path_len
 	
