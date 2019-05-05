@@ -28,15 +28,15 @@ def main():
 		avg_wgh_path_len = []
 
 		#submit metrics tasks
-		node_number = pool.apply_async(metrics.nodes_number, (g,))
-		deg_distr = pool.apply_async(metrics.degree_distribution, (g,))
-		clust_coeff = pool.apply_async(metrics.clustering_coefficient, (g,))
+		node_number = pool.apply_async(func=metrics.nodes_number, args=(g,))
+		deg_distr = pool.apply_async(func=metrics.degree_distribution, args=(g,))
+		clust_coeff = pool.apply_async(func=metrics.clustering_coefficient, args=(g,))
 
 		for node in g.nodes:
-			avg_path_len.append(pool.apply_async(metrics.average_path_length, args=(g, node, )))
+			avg_path_len.append(pool.apply_async(func=metrics.average_path_length, args=(g, node, )))
 				
 		for node in g.nodes:
-			avg_wgh_path_len.append(pool.apply_async(metrics.average_path_length, args=(g, node, "weight", )))
+			avg_wgh_path_len.append(pool.apply_async(func=metrics.average_path_length, args=(g, node, "weight", )))
 
 		#cannot submit other tasks
 		pool.close()

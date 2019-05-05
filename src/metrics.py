@@ -1,12 +1,13 @@
 import networkx as nx
 from collections import defaultdict
-from multiprocessing import Lock
+from multiprocessing import Lock, Value
 
 import logger
 
-__weighted_completed = 0
-__unweighted_completed = 0
+__completed_unweighted = Value("i", 0)
+__completed_weighted = Value("i", 0)
 __progress_bar_lock = Lock()
+
 
 def nodes_number(graph):
 	'''Compute the number of nodes in graph'''
@@ -54,26 +55,23 @@ def average_path_length(graph, source, weight=None):
 
 	avg_path_len = total_weight /  (nodes_number - 1)
 
-	__progress_bar_lock.acquire()
+	with __progress_bar_lock:
+		#need for correct log, one variable generate error with log even if improve code
+		if weight != None:
+			weightStr = "weighted "
+			__completed_weighted.value += 1
+			completed = __completed_weighted.value
+		else:
+			weightStr = ""	
+			__completed_unweighted.value += 1
+			completed = __completed_unweighted.value
+		
+		bar_message = "Average {0}path length".format(weightStr)
+		
+		logger.progress_bar(bar_message, completed, nodes_number)
 
-	if weight != None:
-		global __weighted_completed
-		__weighted_completed = __weighted_completed + 1
-		nodes_computed = __weighted_completed
-		weightStr = "weighted "
-	else:
-		global __unweighted_completed
-		__unweighted_completed = __unweighted_completed + 1
-		nodes_computed = __unweighted_completed
-		weightStr = ""
-	
-	bar_message = "Average {0}path length".format(weightStr)
-	
-	logger.progress_bar(bar_message, nodes_computed, nodes_number)
-	if nodes_computed == nodes_number:
-		logger.log("{0} calculated".format(bar_message))
-
-	__progress_bar_lock.release()
+		if completed == nodes_number:
+			logger.log("{0} calculated".format(bar_message))
 
 	return avg_path_len
 	
