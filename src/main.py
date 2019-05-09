@@ -1,5 +1,4 @@
 import sys
-from multiprocessing import Pool
 
 import graph_types
 import printer
@@ -7,59 +6,53 @@ import saver
 import logger
 import metrics
 
+from analyzable_graph import AnalyzableGraph
+
 def main():
 	#load file
 	GRAPH_PATH = sys.argv[1]
 	PROCESSES_NUMBER = int(sys.argv[2]) if len(sys.argv) >= 3 else 1
 
 	logger.log("Start loading graph")
-
-	g = graph_types.load_pajek(GRAPH_PATH)
-
+	loaded_graph = graph_types.load_pajek(GRAPH_PATH)
 	logger.log("Terminated graph loading")
-	logger.log("Start metrics computing")
 	#printer.print_graph(g)
 
-	if len(g.edges) != 0:
-		pool = Pool(processes=PROCESSES_NUMBER)
+	logger.log("Start metrics computing")
+	
+	if len(loaded_graph.edges) != 0:
+
+		loaded_analyzer = AnalyzableGraph(loaded_graph)
 
 		#submit metrics tasks
-		node_number = pool.apply_async(func=metrics.nodes_number, args=(g, ))
-		deg_distr_tot = pool.apply_async(func=metrics.degree_distribution, args=(g, "tot", ))
-		deg_distr_in = pool.apply_async(func=metrics.degree_distribution, args=(g, "in", ))
-		deg_distr_out = pool.apply_async(func=metrics.degree_distribution, args=(g, "out", ))
-		clust_coeff = pool.apply_async(func=metrics.clustering_coefficient, args=(g, ))
+		loaded_analyzer.add_metric("nodes_number", metrics.nodes_number, (loaded_graph, ))
+		loaded_analyzer.add_metric("deg_distr_tot", metrics.degree_distribution, (loaded_graph, "tot", ))
+		loaded_analyzer.add_metric("deg_distr_in", metrics.degree_distribution, (loaded_graph, "in", ))
+		loaded_analyzer.add_metric("deg_distr_out", metrics.degree_distribution, (loaded_graph, "out", ))
+		loaded_analyzer.add_metric("clust_coeff", metrics.clustering_coefficient, (loaded_graph, ))
 
 		#get main component in main process, cannot submit other without result of this
-		main_component = metrics.main_component(g)
+		main_component = metrics.main_component(loaded_graph)
 
 		#submit metrics based on main_component
-		avg_path_len = []
-		avg_wgh_path_len = []
+		for node in main_component.nodes:
+			loaded_analyzer.add_metric("avg_path_len", metrics.average_path_length, (main_component, node, ))
 
 		for node in main_component.nodes:
-			avg_path_len.append(pool.apply_async(func=metrics.average_path_length, args=(main_component, node, )))
+			loaded_analyzer.add_metric("avg_wgh_path_len", metrics.average_path_length, (main_component, node, "weight", ))
 
-		for node in main_component.nodes:
-			avg_wgh_path_len.append(pool.apply_async(func=metrics.average_path_length, args=(main_component, node, "weight", )))
-
-		#cannot submit other tasks
-		pool.close()
-		#wait results
-		pool.join()
-
-		#get results
-		nodes_number = node_number.get()
-		deg_distr_tot = deg_distr_tot.get()
-		deg_distr_in = deg_distr_in.get()
-		deg_distr_out = deg_distr_out.get()
-		clust_coeff = clust_coeff.get()
+		loaded_analyzer.close_pool()
 		
-		avg_path_len = [r.get() for r in avg_path_len]
-		avg_path_len = sum(avg_path_len) / len(avg_path_len)
-
-		avg_wgh_path_len = [r.get() for r in avg_wgh_path_len]
-		avg_wgh_path_len = sum(avg_wgh_path_len) / len(avg_wgh_path_len)
+		#get results
+		results = loaded_analyzer.get_results()
+		nodes_number = results["nodes_number"]
+		deg_distr_tot = results["deg_distr_tot"]
+		deg_distr_in = results["deg_distr_in"]
+		deg_distr_out = results["deg_distr_out"]
+		clust_coeff = results["clust_coeff"]
+		
+		avg_path_len = sum(results["avg_path_len"]) / len(results["avg_path_len"])
+		avg_wgh_path_len = sum(results["avg_wgh_path_len"]) / len(results["avg_wgh_path_len"])
 
 		logger.log( "Metrics calculated")
 
