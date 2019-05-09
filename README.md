@@ -4,7 +4,9 @@ This project compute metrics for pajek graph generated from https://github.com/R
 Metrics calculated:
 
 * Number of Nodes
-* Degree Distribution
+* Tot Degree Distribution
+* In Degree Distribution
+* Out Degree Distribution
 * Clustering coefficient
 * Average path length
 * Average weighted path length
@@ -49,7 +51,7 @@ py -3 .\main.py graphPath processNum
 Linux:  
 
 ```
-python main.py graphPath processNum
+python3 main.py graphPath processNum
 ```
 
 * graphPath  = path of graph reachable from src 
