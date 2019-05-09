@@ -12,8 +12,6 @@ def main():
 	GRAPH_PATH = sys.argv[1]
 	PROCESSES_NUMBER = int(sys.argv[2]) if len(sys.argv) >= 3 else 1
 
-	pool = Pool(processes=PROCESSES_NUMBER)
-
 	logger.log("Start loading graph")
 
 	g = graph_types.load_pajek(GRAPH_PATH)
@@ -23,33 +21,40 @@ def main():
 	#printer.print_graph(g)
 
 	if len(g.edges) != 0:
+		pool = Pool(processes=PROCESSES_NUMBER)
 
+		#submit metrics tasks
+		node_number = pool.apply_async(func=metrics.nodes_number, args=(g, ))
+		deg_distr_tot = pool.apply_async(func=metrics.degree_distribution, args=(g, "tot", ))
+		deg_distr_in = pool.apply_async(func=metrics.degree_distribution, args=(g, "in", ))
+		deg_distr_out = pool.apply_async(func=metrics.degree_distribution, args=(g, "out", ))
+		clust_coeff = pool.apply_async(func=metrics.clustering_coefficient, args=(g, ))
+
+		#get main component in main process, cannot submit other without result of this
+		main_component = metrics.main_component(g)
+
+		#submit metrics based on main_component
 		avg_path_len = []
 		avg_wgh_path_len = []
 
-		#submit metrics tasks
-		node_number = pool.apply_async(func=metrics.nodes_number, args=(g,))
-		deg_distr = pool.apply_async(func=metrics.degree_distribution, args=(g,))
-		clust_coeff = pool.apply_async(func=metrics.clustering_coefficient, args=(g,))
+		for node in main_component.nodes:
+			avg_path_len.append(pool.apply_async(func=metrics.average_path_length, args=(main_component, node, )))
 
-		for node in g.nodes:
-			avg_path_len.append(pool.apply_async(func=metrics.average_path_length, args=(g, node, )))
-				
-		for node in g.nodes:
-			avg_wgh_path_len.append(pool.apply_async(func=metrics.average_path_length, args=(g, node, "weight", )))
+		for node in main_component.nodes:
+			avg_wgh_path_len.append(pool.apply_async(func=metrics.average_path_length, args=(main_component, node, "weight", )))
 
 		#cannot submit other tasks
 		pool.close()
 		#wait results
 		pool.join()
 
-		logger.log("Processing results")
-
 		#get results
 		nodes_number = node_number.get()
-		deg_distr = deg_distr.get()
+		deg_distr_tot = deg_distr_tot.get()
+		deg_distr_in = deg_distr_in.get()
+		deg_distr_out = deg_distr_out.get()
 		clust_coeff = clust_coeff.get()
-
+		
 		avg_path_len = [r.get() for r in avg_path_len]
 		avg_path_len = sum(avg_path_len) / len(avg_path_len)
 
@@ -66,7 +71,9 @@ def main():
 			"clustering_coefficient": clust_coeff,
 			"average_path_length": avg_path_len,
 			"average_weighted_path_length": avg_wgh_path_len,
-			"degree_distribution": deg_distr,
+			"degree_distribution_tot": deg_distr_tot,
+			"degree_distribution_in": deg_distr_in,
+			"degree_distribution_out": deg_distr_out,
 		}
 		saver.save_json_file(results)
 		logger.log("Metrics saved")

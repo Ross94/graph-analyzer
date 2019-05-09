@@ -16,24 +16,32 @@ def nodes_number(graph):
 	logger.log("Nodes number calculated")
 	return nodes_num
 
-def degree_distribution(graph):
+def degree_distribution(graph, degree_type="tot"):
 	'''
+	Parameters:
+    graph (DiGraph): Graph to analyze
+	degree_type (string): tot, out or in for tot_degree, in_degree or out_degree
+
 	Compute degree for each node. Group nodes for degree.
 	For each degree count number of nodes then calculate percentage of degree. 
 	'''
 
 	degrees = defaultdict(list)
 
+	graph_degree = (graph.out_degree if degree_type == "out" else 
+		graph.in_degree if degree_type == "in" else 
+		graph.degree)
+
 	#group nodes for degree
-	for key, value in sorted(graph.degree):
+	for key, value in sorted(graph_degree):
 		degrees[value].append(key)
 
 	#compute percentage for each degree
 	for k, v in degrees.items():
-		degrees[k] = len(v) / graph.number_of_nodes() * 100
+		degrees[k] = float(int(len(v) / graph.number_of_nodes() * 10000)) / 100
 
 	deg_distr = dict(degrees)
-	logger.log("Degree distribution calculated")
+	logger.log("Degree distribution {0} calculated".format(degree_type))
 	return deg_distr
 
 def clustering_coefficient(graph):
@@ -42,6 +50,9 @@ def clustering_coefficient(graph):
 	clust_coeff = nx.average_clustering(graph, weight='weight')
 	logger.log("Clustering coefficient calculated")
 	return clust_coeff
+
+def main_component(graph):
+	return graph.subgraph(max(nx.weakly_connected_components(graph), key=len)).copy()
 
 def average_path_length(graph, source, weight=None):
 	'''Compute average shortest paths form one node to others'''
@@ -53,7 +64,7 @@ def average_path_length(graph, source, weight=None):
 		if nx.has_path(graph, source, target) and source != target:
 			total_weight = total_weight + nx.shortest_path_length(graph, source, target, weight=weight)
 
-	avg_path_len = total_weight /  (nodes_number - 1)
+	avg_path_len = total_weight / (nodes_number - 1)
 
 	with __progress_bar_lock:
 		#need for correct log, one variable generate error with log even if improve code
