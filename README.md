@@ -4,12 +4,15 @@ This project compute metrics for pajek graph generated from https://github.com/R
 Metrics calculated:
 
 * Number of Nodes
+* Number of Edges
 * Tot Degree Distribution
 * In Degree Distribution
 * Out Degree Distribution
 * Clustering coefficient
 * Average path length
 * Average weighted path length
+
+Comapare data with random graph for small world property.  
 
 ## Getting Started
 
