@@ -120,8 +120,11 @@ def analyze_random(nodes_number, edges_number):
 def main():
 	#load file
 	GRAPH_PATH = sys.argv[1]
-	PROCESSES_NUMBER = int(sys.argv[2]) if len(sys.argv) >= 3 else 1
+	OUTPUT_NAME = sys.argv[2]
+	PROCESSES_NUMBER = int(sys.argv[3]) if len(sys.argv) >= 4 else 1
 
+	logger.config_logger(OUTPUT_NAME)
+	
 	logger.log("Start loading graph")
 	loaded_graph = graph_types.load_pajek(GRAPH_PATH)
 	logger.log("Terminated graph loading")
@@ -133,9 +136,9 @@ def main():
 			edges_number=loaded_graph.number_of_edges())
 
 		small_world = {}
-		small_world["L"] = (float("nan") if random_metrics["average_path_length"] == 0 
+		small_world["L"] = ("NaN" if random_metrics["average_path_length"] == 0 
 			else loaded_metrics["average_path_length"] / random_metrics["average_path_length"])
-		small_world["C"] = (float("nan") if random_metrics["clustering_coefficient"] == 0 
+		small_world["C"] = ("NaN" if random_metrics["clustering_coefficient"] == 0 
 			else loaded_metrics["clustering_coefficient"] / random_metrics["clustering_coefficient"])
 
 		results = {}
@@ -144,7 +147,7 @@ def main():
 		results["small_world"] = small_world
 
 		logger.log("Start saving metrics")
-		saver.save_json_file(results)
+		saver.save_json_file(results, OUTPUT_NAME)
 		logger.log("Metrics saved")
 	else:
 		logger.log("Empty graph, no metrics calculated")

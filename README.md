@@ -54,8 +54,9 @@ py -3 .\main.py graphPath processNum
 Linux:  
 
 ```
-python3 main.py graphPath processNum
+python3 main.py graphPath resultFilename processNum
 ```
 
 * graphPath  = path of graph reachable from src 
-* processNum = number of process for better performance, default is 1 (sequential execution) recommended core number. 
+* resultFilename  = name of file with results
+* processNum = (OPTIONAL) number of process for better performance, default is 1 (sequential execution) recommended core number. 
