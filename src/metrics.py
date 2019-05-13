@@ -16,6 +16,13 @@ def nodes_number(graph):
 	logger.log("Nodes number calculated")
 	return nodes_num
 
+def edges_number(graph):
+	'''Compute the number of edges in graph'''
+
+	edges_num = graph.number_of_edges()
+	logger.log("Edges number calculated")
+	return edges_num
+
 def degree_distribution(graph, degree_type="tot"):
 	'''
 	Parameters:
@@ -38,7 +45,7 @@ def degree_distribution(graph, degree_type="tot"):
 
 	#compute percentage for each degree
 	for k, v in degrees.items():
-		degrees[k] = float(int(len(v) / graph.number_of_nodes() * 10000)) / 100
+		degrees[k] = len(v) / graph.number_of_nodes() * 100
 
 	deg_distr = dict(degrees)
 	logger.log("Degree distribution {0} calculated".format(degree_type))
@@ -82,6 +89,8 @@ def average_path_length(graph, source, weight=None):
 		logger.progress_bar(bar_message, completed, nodes_number)
 
 		if completed == nodes_number:
+			__completed_weighted.value = 0
+			__completed_unweighted.value = 0
 			logger.log("{0} calculated".format(bar_message))
 
 	return avg_path_len

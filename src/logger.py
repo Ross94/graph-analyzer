@@ -5,7 +5,7 @@ from datetime import datetime
 def log(data):
 	'''Print data and save the same data in file whit date in UTC format.'''
     
-	LOG_DIRECTORY = "./../log"
+	LOG_DIRECTORY = "./../logs"
 	LOG_PATH = LOG_DIRECTORY + "/log.log"
 
 	log_str = "[" + datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S") + "] " + data

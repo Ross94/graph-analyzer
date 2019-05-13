@@ -4,8 +4,8 @@ import os
 def save_json_file(data):
 	'''Save metrics in json file.'''
 	
-	RESULT_DIRECTORY = "./../result"
-	RESULTS_PATH = RESULT_DIRECTORY + "/results.json"
+	RESULT_DIRECTORY = "./../results"
+	RESULTS_PATH = RESULT_DIRECTORY + "/result.json"
 
 	if not os.path.exists(RESULT_DIRECTORY):
 		os.makedirs(RESULT_DIRECTORY)
