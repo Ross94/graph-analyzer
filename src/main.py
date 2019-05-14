@@ -9,10 +9,10 @@ import logger
 import metrics
 from analyzable_graph import AnalyzableGraph
 
-def analyze_loaded(graph):
+def analyze_loaded(graph, processNumber=1):
 	logger.log("Start metrics computing for loaded graph")
 
-	analyzer = AnalyzableGraph(graph)
+	analyzer = AnalyzableGraph(graph, processNumber)
 
 	#submit metrics tasks
 	analyzer.add_metric("nodes_number", metric= metrics.nodes_number, 
@@ -67,11 +67,11 @@ def analyze_loaded(graph):
 		"degree_distribution_out": deg_distr_out,
 	}
 
-def analyze_random(nodes_number, edges_number):
+def analyze_random(nodes_number, edges_number, processNumber=1):
 	logger.log("Start metrics computing for random graph")
 
 	graph = nx.gnm_random_graph(nodes_number, edges_number, directed=True)
-	analyzer = AnalyzableGraph(graph)
+	analyzer = AnalyzableGraph(graph, processNumber)
 
 	#submit tasks
 	analyzer.add_metric("nodes_number", metric= metrics.nodes_number, 
@@ -145,9 +145,9 @@ def main():
 		
 		if len(loaded_graph.edges) != 0:
 
-			loaded_metrics = analyze_loaded(loaded_graph)
+			loaded_metrics = analyze_loaded(loaded_graph, PROCESSES_NUMBER)
 			random_metrics = analyze_random(nodes_number=loaded_graph.number_of_nodes(), 
-				edges_number=loaded_graph.number_of_edges())
+				edges_number=loaded_graph.number_of_edges(), processNumber=PROCESSES_NUMBER)
 
 			small_world = {}
 			small_world["L"] = ("NaN" if random_metrics["average_path_length"] == 0 
