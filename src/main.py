@@ -33,11 +33,11 @@ def analyze_loaded(graph, processNumber=1):
 
 	#submit metrics based on main_component
 	for node in main_component.nodes:
-		analyzer.add_metric("avg_path_len", metric=metrics.average_path_length, 
+		analyzer.add_metric("avg_path_len", metric=metrics.total_paths_length_from_source, 
 		args=(main_component, node, ))
 
 	for node in main_component.nodes:
-		analyzer.add_metric("avg_wgh_path_len", metric=metrics.average_path_length, 
+		analyzer.add_metric("avg_wgh_path_len", metric=metrics.total_paths_length_from_source, 
 		args=(main_component, node, "weight", ))
 
 	analyzer.close_pool()
@@ -50,9 +50,11 @@ def analyze_loaded(graph, processNumber=1):
 	deg_distr_in = results["deg_distr_in"]
 	deg_distr_out = results["deg_distr_out"]
 	clust_coeff = results["clust_coeff"]
-		
-	avg_path_len = sum(results["avg_path_len"]) / len(results["avg_path_len"])
-	avg_wgh_path_len = sum(results["avg_wgh_path_len"]) / len(results["avg_wgh_path_len"])
+	
+	avg_path_len = (sum(results["avg_path_len"]) /  
+		(len(results["avg_path_len"]) * (len(results["avg_path_len"]) -1)))
+	avg_wgh_path_len = (sum(results["avg_wgh_path_len"]) / 
+		(len(results["avg_wgh_path_len"]) * (len(results["avg_wgh_path_len"]) -1)))
 
 	logger.log( "Metrics computed for loaded graph")
 
@@ -91,7 +93,7 @@ def analyze_random(nodes_number, edges_number, processNumber=1):
 
 	#submit metrics based on main_component
 	for node in main_component.nodes:
-		analyzer.add_metric("avg_path_len", metric=metrics.average_path_length, 
+		analyzer.add_metric("avg_path_len", metric=metrics.total_paths_length_from_source, 
 		args=(main_component, node, ))
 
 	analyzer.close_pool()

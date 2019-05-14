@@ -61,7 +61,7 @@ def clustering_coefficient(graph):
 def main_component(graph):
 	return graph.subgraph(max(nx.weakly_connected_components(graph), key=len)).copy()
 
-def average_path_length(graph, source, weight=None):
+def total_paths_length_from_source(graph, source, weight=None):
 	'''Compute average shortest paths form one node to others'''
 
 	total_weight = 0.0
@@ -69,9 +69,7 @@ def average_path_length(graph, source, weight=None):
 
 	for target in graph.nodes:
 		if nx.has_path(graph, source, target) and source != target:
-			total_weight = total_weight + nx.shortest_path_length(graph, source, target, weight=weight)
-
-	avg_path_len = total_weight / (nodes_number - 1)
+			total_weight += nx.shortest_path_length(graph, source, target, weight=weight)
 
 	with __progress_bar_lock:
 		#need for correct log, one variable generate error with log even if improve code
@@ -93,5 +91,4 @@ def average_path_length(graph, source, weight=None):
 			__completed_unweighted.value = 0
 			logger.log("{0} calculated".format(bar_message))
 
-	return avg_path_len
-	
+	return total_weight
