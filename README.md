@@ -61,7 +61,7 @@ python3 main.py graphPath resultFilename processNum
 * resultFilename  = name of file with results
 * processNum = (OPTIONAL) number of process for better performance, default is 1 (sequential execution) recommended core number. 
 
-##Output
+## Output
 
 Some notes about format:
 * small_world - L  => float or string "NaN"
