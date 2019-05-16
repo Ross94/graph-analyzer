@@ -10,16 +10,19 @@ class AnalyzableGraph:
         self.__graph = graph
         self.__metrics = {}
 
-    def add_metric(self, metric_name, metric, args):
+    def add_metric(self, metric_name, metric, args=[]):
+        params = []
+        params.append(self.__graph)
+        params += args
         if metric_name not in self.__metrics:
-            self.__metrics[metric_name] = self.__pool.apply_async(func=metric, args=args)
+            self.__metrics[metric_name] = self.__pool.apply_async(func=metric, args=params)
         else:
             if not isinstance(self.__metrics[metric_name], list):
                 elem = self.__metrics[metric_name]
                 self.__metrics[metric_name] = []
                 self.__metrics[metric_name].append(elem)
 
-            self.__metrics[metric_name].append(self.__pool.apply_async(func=metric, args=args))
+            self.__metrics[metric_name].append(self.__pool.apply_async(func=metric, args=params))
     
     def close_pool(self):
         #cannot submit other tasks

@@ -3,121 +3,206 @@ import os
 
 import networkx as nx
 
-import graph_types
+import graph_creator
 import saver
 import logger
 import metrics
 from analyzable_graph import AnalyzableGraph
 
 def analyze_loaded(graph, processNumber=1):
-	logger.log("Start metrics computing for loaded graph")
 
-	analyzer = AnalyzableGraph(graph, processNumber)
+	logger.log("Start metrics computing for complete loaded graph")
+	graph_analyzer = AnalyzableGraph(graph, processNumber)
 
-	#submit metrics tasks
-	analyzer.add_metric("nodes_number", metric= metrics.nodes_number, 
-		args=(graph, ))
-	analyzer.add_metric("edges_number", metric= metrics.edges_number, 
-		args=(graph, ))
-	analyzer.add_metric("deg_distr_tot", metric=metrics.degree_distribution, 
-		args=(graph, "tot", ))
-	analyzer.add_metric("deg_distr_in", metric=metrics.degree_distribution, 
-		args=(graph, "in", ))
-	analyzer.add_metric("deg_distr_out", metric=metrics.degree_distribution, 
-		args=(graph, "out", ))
-	analyzer.add_metric("clust_coeff", metric=metrics.clustering_coefficient, 
-		args=(graph, ))
+	#submit global metrics
+	graph_analyzer.add_metric("graph_nodes_number", metric= metrics.nodes_number)
+	graph_analyzer.add_metric("graph_edges_number", metric= metrics.edges_number)
+	graph_analyzer.add_metric("graph_clust_coeff", metric=metrics.clustering_coefficient)
+	graph_analyzer.add_metric("graph_deg_distr_tot", 
+		metric=metrics.degree_distribution, args=("tot", ))
+	graph_analyzer.add_metric("graph_deg_distr_in", 
+		metric=metrics.degree_distribution, args=("in", ))
+	graph_analyzer.add_metric("graph_deg_distr_out", 
+		metric=metrics.degree_distribution, args=("out", ))
 
+	graph_analyzer.close_pool()
+
+	logger.log("Terminated metrics computing for complete loaded graph")
+
+	#get complete graph results
+	graph_results = graph_analyzer.get_results()
+	graph_nodes_number = graph_results["graph_nodes_number"]
+	graph_edges_number = graph_results["graph_edges_number"]
+	graph_clust_coeff = graph_results["graph_clust_coeff"]
+	graph_deg_distr_tot = graph_results["graph_deg_distr_tot"]
+	graph_deg_distr_in = graph_results["graph_deg_distr_in"]
+	graph_deg_distr_out = graph_results["graph_deg_distr_out"]
+
+
+	
 	#get main component in main process, cannot submit other without result of this
+	logger.log("Start metrics computing for main component of loaded graph")
 	main_component = metrics.main_component(graph)
+	main_comp_analyzer = AnalyzableGraph(main_component, processNumber)
 
 	#submit metrics based on main_component
-	for node in main_component.nodes:
-		analyzer.add_metric("avg_path_len", metric=metrics.total_paths_length_from_source, 
-		args=(main_component, node, ))
+	main_comp_analyzer.add_metric("main_comp_nodes_number", metric= metrics.nodes_number)
+	main_comp_analyzer.add_metric("main_comp_edges_number",metric= metrics.edges_number)
+	main_comp_analyzer.add_metric("main_comp_clust_coeff", metric=metrics.clustering_coefficient)
+	main_comp_analyzer.add_metric("main_comp_deg_distr_tot",
+		 metric=metrics.degree_distribution, args=("tot", ))
+	main_comp_analyzer.add_metric("main_comp_deg_distr_in", 
+		metric=metrics.degree_distribution, args=("in", ))
+	main_comp_analyzer.add_metric("main_comp_deg_distr_out", 
+		metric=metrics.degree_distribution, args=("out", ))
 
 	for node in main_component.nodes:
-		analyzer.add_metric("avg_wgh_path_len", metric=metrics.total_paths_length_from_source, 
-		args=(main_component, node, "weight", ))
+		main_comp_analyzer.add_metric("main_comp_avg_path_len", 
+			metric=metrics.total_paths_length_from_source, args=(node, ))
 
-	analyzer.close_pool()
+	for node in main_component.nodes:
+		main_comp_analyzer.add_metric("main_comp_avg_wgh_path_len", 
+			metric=metrics.total_paths_length_from_source, args=(node, "weight", ))
 
-	#get results
-	results = analyzer.get_results()
-	nodes_number = results["nodes_number"]
-	edges_number = results["edges_number"]
-	deg_distr_tot = results["deg_distr_tot"]
-	deg_distr_in = results["deg_distr_in"]
-	deg_distr_out = results["deg_distr_out"]
-	clust_coeff = results["clust_coeff"]
+	main_comp_analyzer.close_pool()
+	logger.log("Terminated metrics computing for main component of loaded graph")
+
+	#get main component results
+	main_comp_results = main_comp_analyzer.get_results()
+	main_comp_nodes_number = main_comp_results["main_comp_nodes_number"]
+	main_comp_edges_number = main_comp_results["main_comp_edges_number"]
+	main_comp_clust_coeff = main_comp_results["main_comp_clust_coeff"]
+	main_comp_deg_distr_tot = main_comp_results["main_comp_deg_distr_tot"]
+	main_comp_deg_distr_in = main_comp_results["main_comp_deg_distr_in"]
+	main_comp_deg_distr_out = main_comp_results["main_comp_deg_distr_out"]
 	
-	avg_path_len = (sum(results["avg_path_len"]) /  
-		(len(results["avg_path_len"]) * (len(results["avg_path_len"]) -1)))
-	avg_wgh_path_len = (sum(results["avg_wgh_path_len"]) / 
-		(len(results["avg_wgh_path_len"]) * (len(results["avg_wgh_path_len"]) -1)))
+	main_comp_avg_path_len = (sum(main_comp_results["main_comp_avg_path_len"]) /  
+		(
+			len(main_comp_results["main_comp_avg_path_len"]) *
+		 	(len(main_comp_results["main_comp_avg_path_len"]) -1)
+		))
+	main_comp_avg_wgh_path_len = (sum(main_comp_results["main_comp_avg_wgh_path_len"]) / 
+		(
+			len(main_comp_results["main_comp_avg_wgh_path_len"]) * 
+			(len(main_comp_results["main_comp_avg_wgh_path_len"]) -1)
+		))
 
 	logger.log( "Metrics computed for loaded graph")
 
 	return {
-		"nodes_number": nodes_number,
-		"edges_number": edges_number,
-		"clustering_coefficient": clust_coeff,
-		"average_path_length": avg_path_len,
-		"average_weighted_path_length": avg_wgh_path_len,
-		"degree_distribution_tot": deg_distr_tot,
-		"degree_distribution_in": deg_distr_in,
-		"degree_distribution_out": deg_distr_out,
+		"global": {
+			"nodes_number": graph_nodes_number,
+			"edges_number": graph_edges_number,
+			"clustering_coefficient": graph_clust_coeff,
+			"degree_distribution_tot": graph_deg_distr_tot,
+			"degree_distribution_in": graph_deg_distr_in,
+			"degree_distribution_out": graph_deg_distr_out
+		},
+		"main_component": {
+			"nodes_number": main_comp_nodes_number,
+			"edges_number": main_comp_edges_number,
+			"clustering_coefficient": main_comp_clust_coeff,
+			"average_path_length": main_comp_avg_path_len,
+			"average_weighted_path_length": main_comp_avg_wgh_path_len,
+			"degree_distribution_tot": main_comp_deg_distr_tot,
+			"degree_distribution_in": main_comp_deg_distr_in,
+			"degree_distribution_out": main_comp_deg_distr_out
+		}
 	}
 
 def analyze_random(nodes_number, edges_number, processNumber=1):
-	logger.log("Start metrics computing for random graph")
 
-	graph = nx.gnm_random_graph(nodes_number, edges_number, directed=True)
-	analyzer = AnalyzableGraph(graph, processNumber)
+	logger.log("Start creating random graph")
+	graph = graph_creator.random_graph(nodes_number, edges_number)
+	logger.log("Terminated random graph creation")
 
-	#submit tasks
-	analyzer.add_metric("nodes_number", metric= metrics.nodes_number, 
-		args=(graph, ))
-	analyzer.add_metric("edges_number", metric= metrics.edges_number, 
-		args=(graph, ))
-	analyzer.add_metric("deg_distr_tot", metric=metrics.degree_distribution, 
-		args=(graph, "tot", ))
-	analyzer.add_metric("deg_distr_in", metric=metrics.degree_distribution, 
-		args=(graph, "in", ))
-	analyzer.add_metric("deg_distr_out", metric=metrics.degree_distribution, 
-		args=(graph, "out", ))
-	analyzer.add_metric("clust_coeff", metric=metrics.clustering_coefficient, 
-		args=(graph, ))
+	logger.log("Start metrics computing for complete random graph")
+	graph_analyzer = AnalyzableGraph(graph, processNumber)
 
-	main_component = metrics.main_component(graph)
+	#submit global tasks
+	graph_analyzer.add_metric("graph_nodes_number", metric= metrics.nodes_number)
+	graph_analyzer.add_metric("graph_edges_number", metric= metrics.edges_number)
+	graph_analyzer.add_metric("graph_clust_coeff", metric=metrics.clustering_coefficient)
+	graph_analyzer.add_metric("graph_deg_distr_tot", 
+		metric=metrics.degree_distribution, args=("tot", ))
+	graph_analyzer.add_metric("graph_deg_distr_in", 
+		metric=metrics.degree_distribution, args=("in", ))
+	graph_analyzer.add_metric("graph_deg_distr_out", 
+		metric=metrics.degree_distribution, args=("out", ))
 
-	#submit metrics based on main_component
-	for node in main_component.nodes:
-		analyzer.add_metric("avg_path_len", metric=metrics.total_paths_length_from_source, 
-		args=(main_component, node, ))
+	graph_analyzer.close_pool()
 
-	analyzer.close_pool()
+	logger.log("Terminated metrics computing for complete random graph")
 
 	#get results
-	results = analyzer.get_results()
-	nodes_number = results["nodes_number"]
-	edges_number = results["edges_number"]
-	deg_distr_tot = results["deg_distr_tot"]
-	deg_distr_in = results["deg_distr_in"]
-	deg_distr_out = results["deg_distr_out"]
-	clust_coeff = results["clust_coeff"]
-	avg_path_len = sum(results["avg_path_len"]) / len(results["avg_path_len"])
+	graph_results = graph_analyzer.get_results()
+	graph_nodes_number = graph_results["graph_nodes_number"]
+	graph_edges_number = graph_results["graph_edges_number"]
+	graph_clust_coeff = graph_results["graph_clust_coeff"]
+	graph_deg_distr_tot = graph_results["graph_deg_distr_tot"]
+	graph_deg_distr_in = graph_results["graph_deg_distr_in"]
+	graph_deg_distr_out = graph_results["graph_deg_distr_out"]
 
-	logger.log( "Metrics computed for random graph")
+	main_component = metrics.main_component(graph)
+	main_comp_analyzer = AnalyzableGraph(main_component, processNumber)
+
+	#submit metrics based on main_component
+	logger.log("Start metrics computing for main component of random graph")
+
+	main_comp_analyzer.add_metric("main_comp_nodes_number", metric= metrics.nodes_number)
+	main_comp_analyzer.add_metric("main_comp_edges_number", metric= metrics.edges_number)
+	main_comp_analyzer.add_metric("main_comp_clust_coeff", metric=metrics.clustering_coefficient)
+	main_comp_analyzer.add_metric("main_comp_deg_distr_tot", 
+		metric=metrics.degree_distribution, args=("tot", ))
+	main_comp_analyzer.add_metric("main_comp_deg_distr_in", 
+		metric=metrics.degree_distribution, args=("in", ))
+	main_comp_analyzer.add_metric("main_comp_deg_distr_out", 
+		metric=metrics.degree_distribution, args=("out", ))
+	
+		
+	for node in main_component.nodes:
+		main_comp_analyzer.add_metric("main_comp_avg_path_len", 
+			metric=metrics.total_paths_length_from_source, args=(node, ))
+
+	main_comp_analyzer.close_pool()
+
+	logger.log("Termiated metrics computing for main component of random graph")
+
+	#get results
+	main_comp_results = main_comp_analyzer.get_results()
+	main_comp_nodes_number = main_comp_results["main_comp_nodes_number"]
+	main_comp_edges_number = main_comp_results["main_comp_edges_number"]
+	main_comp_clust_coeff = main_comp_results["main_comp_clust_coeff"]
+	main_comp_deg_distr_tot = main_comp_results["main_comp_deg_distr_tot"]
+	main_comp_deg_distr_in = main_comp_results["main_comp_deg_distr_in"]
+	main_comp_deg_distr_out = main_comp_results["main_comp_deg_distr_out"]
+	
+	main_comp_avg_path_len = (sum(main_comp_results["main_comp_avg_path_len"]) /  
+		(
+			len(main_comp_results["main_comp_avg_path_len"]) * 
+			(len(main_comp_results["main_comp_avg_path_len"]) -1)
+		))
+
+	logger.log("Metrics computed for random graph")
 
 	return {
-		"nodes_number": nodes_number,
-		"edges_number": edges_number,
-		"clustering_coefficient": clust_coeff,
-		"average_path_length": avg_path_len,
-		"degree_distribution_tot": deg_distr_tot,
-		"degree_distribution_in": deg_distr_in,
-		"degree_distribution_out": deg_distr_out,
+		"global": {
+			"nodes_number": graph_nodes_number,
+			"edges_number": graph_edges_number,
+			"clustering_coefficient": graph_clust_coeff,
+			"degree_distribution_tot": graph_deg_distr_tot,
+			"degree_distribution_in": graph_deg_distr_in,
+			"degree_distribution_out": graph_deg_distr_out
+		},
+		"main_component": {
+			"nodes_number": main_comp_nodes_number,
+			"edges_number": main_comp_edges_number,
+			"clustering_coefficient": main_comp_clust_coeff,
+			"average_path_length": main_comp_avg_path_len,
+			"degree_distribution_tot": main_comp_deg_distr_tot,
+			"degree_distribution_in": main_comp_deg_distr_in,
+			"degree_distribution_out": main_comp_deg_distr_out
+		}
 	}
 
 def main():
@@ -142,7 +227,7 @@ def main():
 		
 		#load file
 		logger.log("Start loading graph")
-		loaded_graph = graph_types.load_pajek(GRAPH_PATH)
+		loaded_graph = graph_creator.load_pajek(GRAPH_PATH)
 		logger.log("Terminated graph loading")
 		
 		if len(loaded_graph.edges) != 0:
@@ -152,10 +237,12 @@ def main():
 				edges_number=loaded_graph.number_of_edges(), processNumber=PROCESSES_NUMBER)
 
 			small_world = {}
-			small_world["L"] = ("NaN" if random_metrics["average_path_length"] == 0 
-				else loaded_metrics["average_path_length"] / random_metrics["average_path_length"])
-			small_world["C"] = ("NaN" if random_metrics["clustering_coefficient"] == 0 
-				else loaded_metrics["clustering_coefficient"] / random_metrics["clustering_coefficient"])
+			small_world["L"] = ("NaN" if random_metrics["main_component"]["average_path_length"] == 0 
+				else loaded_metrics["main_component"]["average_path_length"] / 
+					random_metrics["main_component"]["average_path_length"])
+			small_world["C"] = ("NaN" if random_metrics["main_component"]["clustering_coefficient"] == 0 
+				else loaded_metrics["main_component"]["clustering_coefficient"] / 
+					random_metrics["main_component"]["clustering_coefficient"])
 
 			results = {}
 			results["loaded_graph"] = loaded_metrics
@@ -164,7 +251,7 @@ def main():
 
 			logger.log("Start saving metrics")
 			saver.save_json_file(results, OUTPUT_NAME)
-			logger.log("Metrics saved")
+			logger.log("Metrics saved in file: {0}".format(OUTPUT_NAME))
 		else:
 			logger.log("Empty graph, no metrics calculated")
 

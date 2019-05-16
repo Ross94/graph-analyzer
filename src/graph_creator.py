@@ -30,3 +30,7 @@ def load_pajek(path):
 				else:
 					g.add_edge(source, target, weight=weight)
 	return g
+
+def random_graph(nodes_number, edges_number):
+	probability = edges_number / (nodes_number * (nodes_number - 1))
+	return nx.gnp_random_graph(nodes_number, probability, directed=True)
