@@ -54,12 +54,13 @@ py -3 .\main.py graphPath processNum
 Linux:  
 
 ```
-python3 main.py graphPath resultFilename processNum
+python3 main.py -graph=string -result=string -process=int -weight=bool
 ```
 
-* graphPath  = path of graph reachable from src 
-* resultFilename  = name of file with results
-* processNum = (OPTIONAL) number of process for better performance, default is 1 (sequential execution) recommended core number. 
+* -graph = path of graph reachable from src. 
+* -result = name of file with results.
+* -processNum = (OPTIONAL) number of process for better performance, default is 1 (sequential execution) recommended core number. 
+* -weight = (OPTIONAL) also compute average path length weighted, default is False, high cost.
 
 ## Output
 

@@ -1,4 +1,3 @@
-import sys
 import os
 
 import networkx as nx
@@ -7,9 +6,10 @@ import graph_creator
 import saver
 import logger
 import metrics
+from arguments import arguments
 from analyzable_graph import AnalyzableGraph
 
-def analyze_loaded(graph, processNumber=1):
+def analyze_loaded(graph, processNumber=1, weight=False):
 
 	logger.log("Start metrics computing for complete loaded graph")
 	graph_analyzer = AnalyzableGraph(graph, processNumber)
@@ -60,9 +60,10 @@ def analyze_loaded(graph, processNumber=1):
 		main_comp_analyzer.add_metric("main_comp_avg_path_len", 
 			metric=metrics.total_paths_length_from_source, args=(node, ))
 
-	for node in main_component.nodes:
-		main_comp_analyzer.add_metric("main_comp_avg_wgh_path_len", 
-			metric=metrics.total_paths_length_from_source, args=(node, "weight", ))
+	if weight:
+		for node in main_component.nodes:
+			main_comp_analyzer.add_metric("main_comp_avg_wgh_path_len", 
+				metric=metrics.total_paths_length_from_source, args=(node, "weight", ))
 
 	main_comp_analyzer.close_pool()
 	logger.log("Terminated metrics computing for main component of loaded graph")
@@ -81,15 +82,16 @@ def analyze_loaded(graph, processNumber=1):
 			len(main_comp_results["main_comp_avg_path_len"]) *
 		 	(len(main_comp_results["main_comp_avg_path_len"]) -1)
 		))
-	main_comp_avg_wgh_path_len = (sum(main_comp_results["main_comp_avg_wgh_path_len"]) / 
-		(
-			len(main_comp_results["main_comp_avg_wgh_path_len"]) * 
-			(len(main_comp_results["main_comp_avg_wgh_path_len"]) -1)
+	if weight:
+		main_comp_avg_wgh_path_len = (sum(main_comp_results["main_comp_avg_wgh_path_len"]) / 
+			(
+				len(main_comp_results["main_comp_avg_wgh_path_len"]) * 
+				(len(main_comp_results["main_comp_avg_wgh_path_len"]) -1)
 		))
 
 	logger.log( "Metrics computed for loaded graph")
 
-	return {
+	res = {
 		"global": {
 			"nodes_number": graph_nodes_number,
 			"edges_number": graph_edges_number,
@@ -103,12 +105,14 @@ def analyze_loaded(graph, processNumber=1):
 			"edges_number": main_comp_edges_number,
 			"clustering_coefficient": main_comp_clust_coeff,
 			"average_path_length": main_comp_avg_path_len,
-			"average_weighted_path_length": main_comp_avg_wgh_path_len,
 			"degree_distribution_tot": main_comp_deg_distr_tot,
 			"degree_distribution_in": main_comp_deg_distr_in,
 			"degree_distribution_out": main_comp_deg_distr_out
 		}
 	}
+	if weight:
+		res["main_component"]["average_weighted_path_length"] = main_comp_avg_wgh_path_len
+	return res
 
 def analyze_random(nodes_number, edges_number, processNumber=1):
 
@@ -207,17 +211,20 @@ def analyze_random(nodes_number, edges_number, processNumber=1):
 
 def main():
 
+	args = arguments()
 	#parse params
-	if len(sys.argv) < 3:
-		print("Missing params specify arguments in this order:\n"
-		"graphPath resultFilename processNumber\n"
-		"graphPath => path of graph from src folder\n"
-		"resultFilename => name of file with results\n"
-		"processNumber => optional, improve performance best value is number of core")
+	if "graph" not in args or "result" not in args:
+		print("Missing params specify arguments:\n"
+		"-graph -result -process -weight\n"
+		"graph => path of graph from src folder\n"
+		"result => name of file with results\n"
+		"process => optional, improve performance best value is number of core\n"
+		"weight => optional, compute also weighted average shortest path only loaded graph")
 	else:
-		GRAPH_PATH = sys.argv[1]
-		OUTPUT_NAME = sys.argv[2]
-		PROCESSES_NUMBER = int(sys.argv[3]) if len(sys.argv) >= 4 else 1
+		GRAPH_PATH = args["graph"]
+		OUTPUT_NAME = args["result"]
+		PROCESSES_NUMBER = args["process"] if "process" in args else 1
+		WEIGHTED = args["weight"] if "weight" in args else False
 
 		if not os.path.exists(GRAPH_PATH):
 			print("File {0} does not exist, please check your path".format(GRAPH_PATH))
@@ -232,7 +239,7 @@ def main():
 		
 		if len(loaded_graph.edges) != 0:
 
-			loaded_metrics = analyze_loaded(loaded_graph, PROCESSES_NUMBER)
+			loaded_metrics = analyze_loaded(loaded_graph, PROCESSES_NUMBER, WEIGHTED)
 			random_metrics = analyze_random(nodes_number=loaded_graph.number_of_nodes(), 
 				edges_number=loaded_graph.number_of_edges(), processNumber=PROCESSES_NUMBER)
 
