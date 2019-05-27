@@ -51,10 +51,10 @@ def degree_distribution(graph, degree_type="tot"):
 	logger.log("Degree distribution {0} calculated".format(degree_type))
 	return deg_distr
 
-def clustering_coefficient(graph):
+def clustering_coefficient(graph, weight=None):
 	'''Compute graph clustering coefficient'''
 
-	clust_coeff = nx.average_clustering(graph, weight='weight')
+	clust_coeff = nx.average_clustering(graph, weight=weight)
 	logger.log("Clustering coefficient calculated")
 	return clust_coeff
 
