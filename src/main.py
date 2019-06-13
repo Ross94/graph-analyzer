@@ -4,7 +4,7 @@ import sys
 import networkx as nx
 
 import graph_creator
-import saver
+import output_manager
 import logger
 import metrics
 from arguments import arguments
@@ -258,7 +258,7 @@ def main():
 			results["small_world"] = small_world
 
 			logger.log("Start saving metrics")
-			saver.save_json_file(results, OUTPUT_NAME)
+			output_manager.save_json_file(results, OUTPUT_NAME)
 			logger.log("Metrics saved in file: {0}".format(OUTPUT_NAME))
 		else:
 			logger.log("Empty graph, no metrics calculated")
